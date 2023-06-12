@@ -57,7 +57,7 @@ contract RoleManager is GovernorState, AccessControl {
         bytes32 role = ContractToPermissions[_contract].role;
         require(hasRole(role, _user) == false, "PoolzGovernor: user already has role");
         grantRole(role, _user);
-        emit RoleGranted(_contract, _user);
+        emit ContractRoleGranted(_contract, _user);
     }
 
     function revokeRoleByContract(address _contract, address _user)
@@ -68,6 +68,6 @@ contract RoleManager is GovernorState, AccessControl {
         bytes32 role = ContractToPermissions[_contract].role;
         require(hasRole(role, _user), "PoolzGovernor: user already has role");
         revokeRole(role, _user);
-        emit RoleRevoked(_contract, _user);
+        emit ContractRoleRevoked(_contract, _user);
     }
 }
