@@ -25,8 +25,8 @@ contract PoolzGovernor is RoleManager {
         transaction.votes = 1;
         transaction.voters[msg.sender] = true;
         transaction.executed = false;
-        emit TransactionProposed(txId, _destination, msg.value, _data);
-        executeTransaction(txId);
+        emit TransactionProposed(txId, _destination, _value, _data);
+        executeIfApproved(txId);
     }
 
     function approveTransaction(uint txId)
@@ -40,10 +40,10 @@ contract PoolzGovernor is RoleManager {
         transaction.votes++;
         transaction.voters[msg.sender] = true;
         emit TransactionApproved(txId, transaction.destination, transaction.votes);
-        executeTransaction(txId);
+        executeIfApproved(txId);
     }
 
-    function executeTransaction(uint txId) private {
+    function executeIfApproved(uint txId) private {
         Transaction storage transaction = transactions[txId];
         if(transaction.votes >= ContractToPermissions[transaction.destination].requiredVotes){
             transaction.executed = true;
