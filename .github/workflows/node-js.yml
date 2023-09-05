@@ -25,6 +25,9 @@ jobs:
       - name: Install dependencies
         run: yarn
 
+      - name: Install typescript
+        run: yarn global add --dev typescript
+
       - name: Run tests and generate coverage
         run: npx hardhat coverage
 
