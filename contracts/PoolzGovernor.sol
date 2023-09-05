@@ -10,21 +10,22 @@ contract PoolzGovernor is RoleManager {
         _;
     }
 
-    function proposeTransaction(address _destination, uint _value, bytes memory _data)
+    function proposeTransaction(address _destination, bytes memory _data)
         public
         roleExistsFor(_destination)
         isAdminOrContractRole(_destination)
+        payable
         returns (uint txId)
     {
         txId  = transactionCount++;
         Transaction storage transaction = transactions[txId];
         transaction.destination = _destination;
-        transaction.value = _value;
+        transaction.value = msg.value;
         transaction.data = _data;
         transaction.votes = 1;
         transaction.voters[msg.sender] = true;
         transaction.executed = false;
-        emit TransactionProposed(txId, _destination, _value, _data);
+        emit TransactionProposed(txId, _destination, msg.value, _data);
         executeTransaction(txId);
     }
 
