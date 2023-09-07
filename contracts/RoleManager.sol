@@ -32,18 +32,14 @@ contract RoleManager is GovernorState, AccessControl {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    function AddNewFunction(address _contract, string calldata _funcSig, uint8 _requiredVotes) external {
-        AddNewFunction(_contract, _funcSig, _requiredVotes, 0); // default level is 0. Level can be increased for sensitive functions
-    }
-
-    function AddNewFunction(address _contract, string calldata _funcSig, uint8 _requiredVotes, uint8 _accessLevel)
+    function AddNewFunction(address _contract, string calldata _funcSig, uint8 _requiredVotes)
         public
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
         require(_requiredVotes > 0, "PoolzGovernor: requiredVotes must be greater than 0");
         bytes4 selector = getSelectorFromSignature(_funcSig);
-        bytes32 role = keccak256(abi.encodePacked(_contract, _accessLevel));
-        ContractSelectorToPermission[_contract][selector] = ContractPermission(role, _requiredVotes, _accessLevel);
+        bytes32 role = keccak256(abi.encodePacked(_contract, selector));
+        ContractSelectorToPermission[_contract][selector] = ContractPermission(role, _requiredVotes);
         AllContracts.push(_contract);
         emit ContractAdded(_contract, _requiredVotes);
     }

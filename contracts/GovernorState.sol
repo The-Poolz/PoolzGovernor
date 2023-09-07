@@ -19,7 +19,6 @@ contract GovernorState {
     struct ContractPermission {
         bytes32 role;
         uint8 requiredVotes;
-        uint8 accessLevel; 
     }
 
     event ContractAdded(address indexed _contract, uint8 _requiredVotes);
