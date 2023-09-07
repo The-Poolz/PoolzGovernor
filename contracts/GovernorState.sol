@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/AccessControl.sol";
-
 contract GovernorState {
     mapping (uint => Transaction) public transactions;
-    mapping (address => ContractPermission) public ContractToPermissions;
+    mapping (address => mapping(bytes4 => ContractPermission)) public ContractSelectorToPermission; // [contract][functionSelector] => permission
     uint public transactionCount;
     address[] public AllContracts;
 
@@ -44,6 +42,14 @@ contract GovernorState {
         data = transaction.data;
         votes = transaction.votes;
         executed = transaction.executed;
+    }
+
+    function getSelectorFromData(bytes memory txData) public pure returns (bytes4 selector) {
+        selector = bytes4(txData[0]) | bytes4(txData[1]) >> 8 | bytes4(txData[2]) >> 16 | bytes4(txData[3]) >> 24;
+    }
+
+    function getSelectorFromSignature(string calldata sig) public pure returns (bytes4 selector) {
+        selector = bytes4(keccak256(bytes(sig)));
     }
 
     function isTransactionVotedBy(uint _txId, address _user) external view returns (bool) {

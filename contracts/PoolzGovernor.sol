@@ -12,8 +12,7 @@ contract PoolzGovernor is RoleManager {
 
     function proposeTransaction(address _destination, bytes memory _data)
         public
-        roleExistsFor(_destination)
-        isAdminOrContractRole(_destination)
+        isAdminOrFunctionRole(_destination, _data)
         payable
         returns (uint txId)
     {
@@ -32,7 +31,7 @@ contract PoolzGovernor is RoleManager {
     function approveTransaction(uint txId)
         public
         transactionExists(txId)
-        isAdminOrContractRole(transactions[txId].destination)
+        isAdminOrFunctionRole(transactions[txId].destination, transactions[txId].data)
     {
         Transaction storage transaction = transactions[txId];
         require(transaction.executed == false, "PoolzGovernor: transaction already executed");
@@ -45,7 +44,8 @@ contract PoolzGovernor is RoleManager {
 
     function executeIfApproved(uint txId) private {
         Transaction storage transaction = transactions[txId];
-        if(transaction.votes >= ContractToPermissions[transaction.destination].requiredVotes){
+        bytes4 selector = getSelectorFromData(transaction.data);
+        if(transaction.votes >= ContractSelectorToPermission[transaction.destination][selector].requiredVotes){
             transaction.executed = true;
             (bool success, ) = transaction.destination.call{value: transaction.value}(transaction.data);
             require(success, "PoolzGovernor: transaction execution reverted.");
