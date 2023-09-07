@@ -52,14 +52,6 @@ contract GovernorState {
         selector = bytes4(keccak256(bytes(sig)));
     }
 
-    // function getFunctionSelector(bytes calldata data) public pure returns (bytes4) {
-    //     bytes4 selector;
-    //     assembly {
-    //         selector := mload(add(data, 0x20))
-    //     }
-    //     return selector;
-    // }
-
     function isTransactionVotedBy(uint _txId, address _user) external view returns (bool) {
         return transactions[_txId].voters[_user];
     }
