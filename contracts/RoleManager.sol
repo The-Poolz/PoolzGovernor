@@ -39,7 +39,7 @@ contract RoleManager is GovernorState, AccessControl {
         bytes4 selector = getSelectorFromSignature(_funcSig);
         bytes32 role = keccak256(abi.encodePacked(_contract, selector));
         _setRoleAdmin(role, ADMIN_ROLE);
-        ContractSelectorToPermission[_contract][selector] = ContractPermission(role, _requiredVotes);
+        ContractSelectorToPermission[_contract][selector] = Permission(role, _requiredVotes);
         AllContracts.push(_contract);
         emit ContractAdded(_contract, _requiredVotes);
     }
@@ -69,8 +69,15 @@ contract RoleManager is GovernorState, AccessControl {
         bytes4 selector = getSelectorFromSignature(_funcSig);
         bytes32 role = ContractSelectorToPermission[_contract][selector].role;
         require(hasRole(role, _user) == false, "PoolzGovernor: user already has role");
-        grantRole(role, _user);
-        emit RoleGranted(_contract, _user);
+        UserPermission storage userPermission = UsersToPermission[_user][_contract][selector];
+        require(userPermission.voters[msg.sender] == false, "PoolzGovernor: you already voted");
+        userPermission.votes++;
+        userPermission.voters[msg.sender] = true;
+        if(userPermission.votes >= admins.length){
+            userPermission.isGranted = true;
+            _grantRole(role, _user);
+            emit RoleGranted(_contract, _user);
+        }
     }
 
     function revokeRoleOfFunction(address _contract, string calldata _funcSig, address _user)
@@ -80,7 +87,13 @@ contract RoleManager is GovernorState, AccessControl {
     {
         bytes4 selector = getSelectorFromSignature(_funcSig);
         bytes32 role = ContractSelectorToPermission[_contract][selector].role;
-        require(hasRole(role, _user), "PoolzGovernor: user already has role");
+        require(hasRole(role, _user), "PoolzGovernor: user has no role");
+        UserPermission storage userPermission = UsersToPermission[_user][_contract][selector];
+        userPermission.votes = 0;
+        userPermission.isGranted = false;
+        for(uint i = 0; i < admins.length; i++){
+            userPermission.voters[admins[i]] = false;
+        }
         revokeRole(role, _user);
         emit RoleRevoked(_contract, _user);
     }

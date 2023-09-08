@@ -8,6 +8,8 @@ contract PoolzGovernor is RoleManager {
     constructor(address _secondAdmin) {
         _setupRole(ADMIN_ROLE, msg.sender);
         _setupRole(ADMIN_ROLE, _secondAdmin);
+        admins.push(msg.sender);
+        admins.push(_secondAdmin);
     }
 
     modifier transactionExists(uint txId) {

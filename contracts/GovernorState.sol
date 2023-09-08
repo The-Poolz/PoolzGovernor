@@ -3,9 +3,11 @@ pragma solidity ^0.8.0;
 
 contract GovernorState {
     mapping (uint => Transaction) public transactions;
-    mapping (address => mapping(bytes4 => ContractPermission)) public ContractSelectorToPermission; // [contract][functionSelector] => permission
+    mapping (address => mapping(bytes4 => Permission)) public ContractSelectorToPermission; // [contract][functionSelector] => permission
+    mapping (address => mapping(address => mapping(bytes4 => UserPermission))) public UsersToPermission; // [user][contract][functionSelector] => UserPermission
     uint public transactionCount;
     address[] public AllContracts;
+    address[] public admins; // no setter, only constructor
 
     struct Transaction {
         address destination;
@@ -16,9 +18,15 @@ contract GovernorState {
         bool executed;
     }
 
-    struct ContractPermission {
+    struct Permission {
         bytes32 role;
         uint8 requiredVotes;
+    }
+
+    struct UserPermission {
+        uint8 votes;
+        mapping(address => bool) voters;
+        bool isGranted;        
     }
 
     event ContractAdded(address indexed _contract, uint8 _requiredVotes);
