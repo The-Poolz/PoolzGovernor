@@ -61,7 +61,7 @@ contract RoleManager is GovernorState, AccessControl {
         emit ContractRemoved(_contract);
     }
 
-    function grantRoleByContract(address _contract, string calldata _funcSig, address _user)
+    function grantRoleOfFunction(address _contract, string calldata _funcSig, address _user)
         external
         onlyRole(ADMIN_ROLE)
         roleExistsFor(_contract, getSelectorFromSignature(_funcSig))
@@ -73,7 +73,7 @@ contract RoleManager is GovernorState, AccessControl {
         emit RoleGranted(_contract, _user);
     }
 
-    function revokeRoleByContract(address _contract, string calldata _funcSig, address _user)
+    function revokeRoleOfFunction(address _contract, string calldata _funcSig, address _user)
         external
         onlyRole(ADMIN_ROLE)
         roleExistsFor(_contract, getSelectorFromSignature(_funcSig))
