@@ -5,6 +5,9 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./GovernorState.sol";
 
 contract RoleManager is GovernorState, AccessControl {
+
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+
     modifier roleExistsFor(address _contract, bytes4 _selector) {
         _roleExistsFor(_contract, _selector);
         _;
@@ -23,22 +26,19 @@ contract RoleManager is GovernorState, AccessControl {
 
     function _isAdminOrFunctionRole(address _contract, bytes4 _selector) private view {
         require(
-            hasRole(DEFAULT_ADMIN_ROLE, msg.sender) || 
+            hasRole(ADMIN_ROLE, msg.sender) || 
             hasRole(ContractSelectorToPermission[_contract][_selector].role, msg.sender
         ), "PoolzGovernor: must be admin or have contract role");
     }
 
-    constructor() {
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    }
-
     function AddNewFunction(address _contract, string calldata _funcSig, uint8 _requiredVotes)
         public
-        onlyRole(DEFAULT_ADMIN_ROLE)
+        onlyRole(ADMIN_ROLE)
     {
         require(_requiredVotes > 0, "PoolzGovernor: requiredVotes must be greater than 0");
         bytes4 selector = getSelectorFromSignature(_funcSig);
         bytes32 role = keccak256(abi.encodePacked(_contract, selector));
+        _setRoleAdmin(role, ADMIN_ROLE);
         ContractSelectorToPermission[_contract][selector] = ContractPermission(role, _requiredVotes);
         AllContracts.push(_contract);
         emit ContractAdded(_contract, _requiredVotes);
@@ -46,7 +46,7 @@ contract RoleManager is GovernorState, AccessControl {
 
     function RemoveFunction(address _contract, string calldata _funcSig)
         external
-        onlyRole(DEFAULT_ADMIN_ROLE)
+        onlyRole(ADMIN_ROLE)
         roleExistsFor(_contract, getSelectorFromSignature(_funcSig))
     {
         bytes4 selector = getSelectorFromSignature(_funcSig);
@@ -63,7 +63,7 @@ contract RoleManager is GovernorState, AccessControl {
 
     function grantRoleByContract(address _contract, string calldata _funcSig, address _user)
         external
-        onlyRole(DEFAULT_ADMIN_ROLE)
+        onlyRole(ADMIN_ROLE)
         roleExistsFor(_contract, getSelectorFromSignature(_funcSig))
     {
         bytes4 selector = getSelectorFromSignature(_funcSig);
@@ -75,7 +75,7 @@ contract RoleManager is GovernorState, AccessControl {
 
     function revokeRoleByContract(address _contract, string calldata _funcSig, address _user)
         external
-        onlyRole(DEFAULT_ADMIN_ROLE)
+        onlyRole(ADMIN_ROLE)
         roleExistsFor(_contract, getSelectorFromSignature(_funcSig))
     {
         bytes4 selector = getSelectorFromSignature(_funcSig);

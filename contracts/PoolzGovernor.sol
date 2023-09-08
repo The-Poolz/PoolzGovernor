@@ -5,6 +5,11 @@ import "./RoleManager.sol";
 
 contract PoolzGovernor is RoleManager {
 
+    constructor(address _secondAdmin) {
+        _setupRole(ADMIN_ROLE, msg.sender);
+        _setupRole(ADMIN_ROLE, _secondAdmin);
+    }
+
     modifier transactionExists(uint txId) {
         require(txId < transactionCount, "PoolzGovernor: transaction does not exist");
         _;
