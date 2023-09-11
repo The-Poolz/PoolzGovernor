@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "./GovernorState.sol";
 
-contract RoleManager is GovernorState, AccessControl {
+contract RoleManager is GovernorState, AccessControlEnumerable {
 
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
@@ -97,4 +97,5 @@ contract RoleManager is GovernorState, AccessControl {
         revokeRole(role, _user);
         emit RoleRevoked(_contract, _user);
     }
+
 }
