@@ -5,11 +5,12 @@ import "./RoleManager.sol";
 
 contract PoolzGovernor is RoleManager {
 
-    constructor(address _secondAdmin) {
-        _setupRole(ADMIN_ROLE, msg.sender);
-        _setupRole(ADMIN_ROLE, _secondAdmin);
-        admins.push(msg.sender);
-        admins.push(_secondAdmin);
+    constructor(address[] memory _admins) {
+        require(_admins.length >= 2, "PoolzGovernor: Need more than 1 admin");
+        for(uint i = 0; i < _admins.length; i++){
+            _setupRole(ADMIN_ROLE, _admins[i]);
+            admins.push(_admins[i]);
+        }
     }
 
     modifier transactionExists(uint txId) {
