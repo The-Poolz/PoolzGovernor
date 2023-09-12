@@ -20,14 +20,14 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
         _;
     }
 
-    function _roleExistsFor(address _contract, bytes4 _selector) private view {
-        require(ContractSelectorToPermission[_contract][_selector].role != bytes32(0), "PoolzGovernor: role does not exist for Function");
+    function _roleExistsFor(address _contract, bytes4 _selector) private pure {
+        require(getRoleOfSelector(_contract, _selector) != bytes32(0), "PoolzGovernor: role does not exist for Function");
     }
 
     function _isAdminOrFunctionRole(address _contract, bytes4 _selector) private view {
         require(
             hasRole(ADMIN_ROLE, msg.sender) || 
-            hasRole(ContractSelectorToPermission[_contract][_selector].role, msg.sender
+            hasRole(getRoleOfSelector(_contract, _selector), msg.sender
         ), "PoolzGovernor: must be admin or have contract role");
     }
 
@@ -39,7 +39,7 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
         bytes4 selector = getSelectorFromSignature(_funcSig);
         bytes32 role = keccak256(abi.encodePacked(_contract, selector));
         _setRoleAdmin(role, ADMIN_ROLE);
-        ContractSelectorToPermission[_contract][selector] = Permission(role, _requiredVotes);
+        SelectorToRequiredVotes[_contract][selector] =  _requiredVotes;
         AllContracts.push(_contract);
         emit ContractAdded(_contract, _requiredVotes);
     }
@@ -50,7 +50,7 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
         roleExistsFor(_contract, getSelectorFromSignature(_funcSig))
     {
         bytes4 selector = getSelectorFromSignature(_funcSig);
-        delete ContractSelectorToPermission[_contract][selector];
+        SelectorToRequiredVotes[_contract][selector] = 0;
         for(uint i = 0; i < AllContracts.length; i++){
             if(AllContracts[i] == _contract){
                 AllContracts[i] = AllContracts[AllContracts.length - 1];
@@ -85,6 +85,7 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
         }
     }
 
+
     function resetVotes(PermissionStatus storage _votes) private {
         _votes.votes = 0;
         _votes.isGranted = false;
@@ -107,7 +108,7 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
         roleExistsFor(_contract, getSelectorFromSignature(_funcSig))
     {
         bytes4 selector = getSelectorFromSignature(_funcSig);
-        bytes32 role = ContractSelectorToPermission[_contract][selector].role;
+        bytes32 role = getRoleOfSelector(_contract, selector);
         require(hasRole(role, _user) == false, "PoolzGovernor: user already has role");
         PermissionStatus storage PermissionStatus = UsersToPermission[_user][_contract][selector];
         require(PermissionStatus.voters[msg.sender] == false, "PoolzGovernor: you already voted");
@@ -126,7 +127,7 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
         roleExistsFor(_contract, getSelectorFromSignature(_funcSig))
     {
         bytes4 selector = getSelectorFromSignature(_funcSig);
-        bytes32 role = ContractSelectorToPermission[_contract][selector].role;
+        bytes32 role = getRoleOfSelector(_contract, selector);
         require(hasRole(role, _user), "PoolzGovernor: user has no role");
         PermissionStatus storage permissionStatus = UsersToPermission[_user][_contract][selector];
         revokeRole(role, _user);

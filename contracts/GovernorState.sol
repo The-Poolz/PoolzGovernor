@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 contract GovernorState {
     mapping (uint => Transaction) public transactions;
-    mapping (address => mapping(bytes4 => Permission)) public ContractSelectorToPermission; // [contract][functionSelector] => permission
+    mapping (address => mapping(bytes4 => uint8)) public SelectorToRequiredVotes; // [contract][functionSelector] => permission
     mapping (address => mapping(address => mapping(bytes4 => PermissionStatus))) public UsersToPermission; // [user][contract][functionSelector] => PermissionStatus
     mapping (address => PermissionStatus) public GrantAdminVotes;
     mapping (address => PermissionStatus) public RevokeAdminVotes;
@@ -17,11 +17,6 @@ contract GovernorState {
         uint8 votes;
         mapping(address => bool) voters;
         bool executed;
-    }
-
-    struct Permission {
-        bytes32 role;
-        uint8 requiredVotes;
     }
 
     struct PermissionStatus {
@@ -51,6 +46,10 @@ contract GovernorState {
         data = transaction.data;
         votes = transaction.votes;
         executed = transaction.executed;
+    }
+
+    function getRoleOfSelector(address _contract, bytes4 selector) public pure returns(bytes32 role) {
+        role = keccak256(abi.encodePacked(_contract, selector));
     }
 
     function getSelectorFromData(bytes memory txData) public pure returns (bytes4 selector) {

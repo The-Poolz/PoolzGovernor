@@ -52,7 +52,7 @@ contract PoolzGovernor is RoleManager {
     function executeIfApproved(uint txId) private {
         Transaction storage transaction = transactions[txId];
         bytes4 selector = getSelectorFromData(transaction.data);
-        if(transaction.votes >= ContractSelectorToPermission[transaction.destination][selector].requiredVotes){
+        if(transaction.votes >= SelectorToRequiredVotes[transaction.destination][selector]){
             transaction.executed = true;
             (bool success, ) = transaction.destination.call{value: transaction.value}(transaction.data);
             require(success, "PoolzGovernor: transaction execution reverted.");
