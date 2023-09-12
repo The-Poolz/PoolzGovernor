@@ -4,9 +4,9 @@ pragma solidity ^0.8.0;
 contract GovernorState {
     mapping (uint => Transaction) public transactions;
     mapping (address => mapping(bytes4 => uint8)) public SelectorToRequiredVotes; // [contract][functionSelector] => permission
-    mapping (address => mapping(address => mapping(bytes4 => PermissionStatus))) public UsersToPermission; // [user][contract][functionSelector] => PermissionStatus
-    mapping (address => PermissionStatus) public GrantAdminVotes;
-    mapping (address => PermissionStatus) public RevokeAdminVotes;
+    mapping (address => mapping(address => mapping(bytes4 => Votes))) public UsersToVotes; // [user][contract][functionSelector] => Votes
+    mapping (address => Votes) public GrantAdminVotes;
+    mapping (address => Votes) public RevokeAdminVotes;
     uint public transactionCount;
     address[] public AllContracts;
 
@@ -19,10 +19,9 @@ contract GovernorState {
         bool executed;
     }
 
-    struct PermissionStatus {
-        uint8 votes;
-        mapping(address => bool) voters;
-        bool isGranted;
+    struct Votes {
+        uint8 total;
+        mapping(address => bool) voteOf;
     }
 
     event ContractAdded(address indexed _contract, uint8 _requiredVotes);

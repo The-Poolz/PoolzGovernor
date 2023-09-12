@@ -62,36 +62,34 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
     }
 
     function grantAdmin(address _admin) external onlyRole(ADMIN_ROLE) {
-        PermissionStatus storage permissionStatus = GrantAdminVotes[_admin];
+        Votes storage votes = GrantAdminVotes[_admin];
         require(hasRole(ADMIN_ROLE, _admin) == false, "PoolzGovernor: user already admin");
-        require(permissionStatus.voters[msg.sender] == false, "PoolzGovernor: you already voted");
-        ++permissionStatus.votes;
-        permissionStatus.voters[msg.sender] = true;
-        if(permissionStatus.votes >= getRoleMemberCount(ADMIN_ROLE)){
+        require(votes.voteOf[msg.sender] == false, "PoolzGovernor: you already voted");
+        ++votes.total;
+        votes.voteOf[msg.sender] = true;
+        if(votes.total >= getRoleMemberCount(ADMIN_ROLE)){
             _setupRole(ADMIN_ROLE, _admin);
-            resetVotes(permissionStatus);
+            resetVotes(votes);
         }
     }
 
     function revokeAdmin(address _admin) external onlyRole(ADMIN_ROLE) {
-        PermissionStatus storage permissionStatus = RevokeAdminVotes[_admin];
+        Votes storage votes = RevokeAdminVotes[_admin];
         require(hasRole(ADMIN_ROLE, _admin) == true, "PoolzGovernor: user not admin");
-        require(permissionStatus.voters[msg.sender] == false, "PoolzGovernor: you already voted");
-        ++permissionStatus.votes;
-        permissionStatus.voters[msg.sender] = true;
-        if(permissionStatus.votes >= getRoleMemberCount(ADMIN_ROLE) - 1){
+        require(votes.voteOf[msg.sender] == false, "PoolzGovernor: you already voted");
+        ++votes.total;
+        votes.voteOf[msg.sender] = true;
+        if(votes.total >= getRoleMemberCount(ADMIN_ROLE) - 1){
             revokeRole(ADMIN_ROLE, _admin);
-            resetVotes(permissionStatus);
+            resetVotes(votes);
         }
     }
 
-
-    function resetVotes(PermissionStatus storage _votes) private {
-        _votes.votes = 0;
-        _votes.isGranted = false;
+    function resetVotes(Votes storage _votes) private {
+        _votes.total = 0;
         uint256 totalAdmins = getRoleMemberCount(ADMIN_ROLE);
         for(uint i = 0; i < totalAdmins; i++){
-            _votes.voters[getRoleMember(ADMIN_ROLE, i)] = false;
+            _votes.voteOf[getRoleMember(ADMIN_ROLE, i)] = false;
         }
     }
 
@@ -110,13 +108,13 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
         bytes4 selector = getSelectorFromSignature(_funcSig);
         bytes32 role = getRoleOfSelector(_contract, selector);
         require(hasRole(role, _user) == false, "PoolzGovernor: user already has role");
-        PermissionStatus storage PermissionStatus = UsersToPermission[_user][_contract][selector];
-        require(PermissionStatus.voters[msg.sender] == false, "PoolzGovernor: you already voted");
-        ++PermissionStatus.votes;
-        PermissionStatus.voters[msg.sender] = true;
-        if(PermissionStatus.votes >= getRoleMemberCount(ADMIN_ROLE)){
-            PermissionStatus.isGranted = true;
+        Votes storage votes = UsersToVotes[_user][_contract][selector];
+        require(votes.voteOf[msg.sender] == false, "PoolzGovernor: you already voted");
+        ++votes.total;
+        votes.voteOf[msg.sender] = true;
+        if(votes.total >= getRoleMemberCount(ADMIN_ROLE)){
             _grantRole(role, _user);
+            resetVotes(votes);
             emit RoleGranted(_contract, _user);
         }
     }
@@ -129,9 +127,7 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
         bytes4 selector = getSelectorFromSignature(_funcSig);
         bytes32 role = getRoleOfSelector(_contract, selector);
         require(hasRole(role, _user), "PoolzGovernor: user has no role");
-        PermissionStatus storage permissionStatus = UsersToPermission[_user][_contract][selector];
         revokeRole(role, _user);
-        resetVotes(permissionStatus);
         emit RoleRevoked(_contract, _user);
     }
 
