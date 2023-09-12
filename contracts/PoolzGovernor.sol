@@ -9,7 +9,6 @@ contract PoolzGovernor is RoleManager {
         require(_admins.length >= 2, "PoolzGovernor: Need more than 1 admin");
         for(uint i = 0; i < _admins.length; i++){
             _setupRole(ADMIN_ROLE, _admins[i]);
-            admins.push(_admins[i]);
         }
     }
 
