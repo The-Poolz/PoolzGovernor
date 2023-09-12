@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 contract GovernorState {
-    mapping (uint => Transaction) public transactions;
+    mapping (uint => Transaction) internal transactions;
     mapping (address => mapping(bytes4 => uint8)) public SelectorToRequiredVotes; // [contract][functionSelector] => permission
     mapping (address => mapping(address => mapping(bytes4 => Votes))) public UsersToVotes; // [user][contract][functionSelector] => Votes
     mapping (address => Votes) public GrantAdminVotes;
@@ -14,16 +14,14 @@ contract GovernorState {
         address destination;
         uint value;
         bytes data;
-        uint8 votes;
-        mapping(address => bool) voters;
         bool executed;
+        Votes votes;
     }
 
     struct Votes {
         uint8 total;
         mapping(address => bool) voteOf;
     }
-
 
     event ContractAdded(address indexed _contract, uint8 _requiredVotes);
     event ContractRemoved(address indexed _contract);
@@ -37,15 +35,19 @@ contract GovernorState {
         address destination,
         uint value,
         bytes memory data,
-        uint8 votes,
+        uint8 totalVotes,
         bool executed
     ) {
         Transaction storage transaction = transactions[_txId];
         destination = transaction.destination;
         value = transaction.value;
         data = transaction.data;
-        votes = transaction.votes;
+        totalVotes = transaction.votes.total;
         executed = transaction.executed;
+    }
+
+    function getVoteOfTransactionById(uint _txId, address _user) external view returns (bool) {
+        return transactions[_txId].votes.voteOf[_user];
     }
 
     function getRoleOfSelector(address _contract, bytes4 selector) public pure returns(bytes32 role) {
@@ -61,7 +63,7 @@ contract GovernorState {
     }
 
     function isTransactionVotedBy(uint _txId, address _user) external view returns (bool) {
-        return transactions[_txId].voters[_user];
+        return transactions[_txId].votes.voteOf[_user];
     }
 
     function getTotalContracts() external view returns (uint) {
