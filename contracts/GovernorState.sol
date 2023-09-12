@@ -24,6 +24,7 @@ contract GovernorState {
         mapping(address => bool) voteOf;
     }
 
+
     event ContractAdded(address indexed _contract, uint8 _requiredVotes);
     event ContractRemoved(address indexed _contract);
     event RoleGranted(address indexed _contract, address indexed _user);

@@ -128,6 +128,7 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
         bytes32 role = getRoleOfSelector(_contract, selector);
         require(hasRole(role, _user), "PoolzGovernor: user has no role");
         revokeRole(role, _user);
+        resetVotes(permissionStatus);
         emit RoleRevoked(_contract, _user);
     }
 
