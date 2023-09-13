@@ -40,7 +40,6 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
         bytes32 role = keccak256(abi.encodePacked(_contract, selector));
         _setRoleAdmin(role, ADMIN_ROLE);
         SelectorToRequiredVotes[_contract][selector] =  _requiredVotes;
-        AllContracts.push(_contract);
         emit ContractAdded(_contract, _requiredVotes);
     }
 
@@ -51,13 +50,6 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
     {
         bytes4 selector = getSelectorFromSignature(_funcSig);
         SelectorToRequiredVotes[_contract][selector] = 0;
-        for(uint i = 0; i < AllContracts.length; i++){
-            if(AllContracts[i] == _contract){
-                AllContracts[i] = AllContracts[AllContracts.length - 1];
-                AllContracts.pop();
-                break;
-            }
-        }
         emit ContractRemoved(_contract);
     }
 

@@ -8,7 +8,6 @@ contract GovernorState {
     mapping (address => Votes) public GrantAdminVotes;
     mapping (address => Votes) public RevokeAdminVotes;
     uint public transactionCount;
-    address[] public AllContracts;
 
     struct Transaction {
         address destination;
@@ -66,7 +65,4 @@ contract GovernorState {
         return transactions[_txId].votes.voteOf[_user];
     }
 
-    function getTotalContracts() external view returns (uint) {
-        return AllContracts.length;
-    }
 }
