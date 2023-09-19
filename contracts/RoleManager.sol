@@ -40,7 +40,7 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
         bytes32 role = keccak256(abi.encodePacked(_contract, selector));
         _setRoleAdmin(role, ADMIN_ROLE);
         SelectorToRequiredVotes[_contract][selector] =  _requiredVotes;
-        emit ContractAdded(_contract, _requiredVotes);
+        emit FunctionAdded(_contract, selector, _requiredVotes);
     }
 
     function RemoveFunction(address _contract, string calldata _funcSig)
@@ -50,7 +50,7 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
     {
         bytes4 selector = getSelectorFromSignature(_funcSig);
         SelectorToRequiredVotes[_contract][selector] = 0;
-        emit ContractRemoved(_contract);
+        emit FunctionRemoved(_contract, selector);
     }
 
     function grantAdmin(address _admin) external onlyRole(ADMIN_ROLE) {

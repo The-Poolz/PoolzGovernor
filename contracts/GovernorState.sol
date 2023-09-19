@@ -22,8 +22,8 @@ contract GovernorState {
         mapping(address => bool) voteOf;
     }
 
-    event ContractAdded(address indexed _contract, uint8 _requiredVotes);
-    event ContractRemoved(address indexed _contract);
+    event FunctionAdded(address indexed _contract, bytes4 indexed _selector, uint8 _requiredVotes);
+    event FunctionRemoved(address indexed _contract, bytes4 indexed _selector);
     event FunctionGranted(address indexed _contract, bytes4 indexed _selector, address indexed _user);
     event FunctionRevoked(address indexed _contract, bytes4 indexed _selector, address indexed _user);
     event TransactionProposed(uint txId, address indexed _destination, uint _value, bytes _data);
