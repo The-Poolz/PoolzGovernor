@@ -107,7 +107,7 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
         if(votes.total >= getRoleMemberCount(ADMIN_ROLE)){
             _grantRole(role, _user);
             resetVotes(votes);
-            emit RoleGranted(_contract, _user);
+            emit FunctionGranted(_contract, selector, _user);
         }
     }
 
@@ -120,7 +120,7 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
         bytes32 role = getRoleOfSelector(_contract, selector);
         require(hasRole(role, _user), "PoolzGovernor: user has no role");
         revokeRole(role, _user);
-        emit RoleRevoked(_contract, _user);
+        emit FunctionRevoked(_contract, selector, _user);
     }
 
     function transferRoles(address _to, bytes32[] memory _roles) external {

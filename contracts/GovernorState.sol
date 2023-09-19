@@ -24,8 +24,8 @@ contract GovernorState {
 
     event ContractAdded(address indexed _contract, uint8 _requiredVotes);
     event ContractRemoved(address indexed _contract);
-    event RoleGranted(address indexed _contract, address indexed _user);
-    event RoleRevoked(address indexed _contract, address indexed _user);
+    event FunctionGranted(address indexed _contract, bytes4 indexed _selector, address indexed _user);
+    event FunctionRevoked(address indexed _contract, bytes4 indexed _selector, address indexed _user);
     event TransactionProposed(uint txId, address indexed _destination, uint _value, bytes _data);
     event TransactionApproved(uint txId, address indexed _destination, uint8 votes);
     event TransactionExecuted(uint txId, address indexed _destination, uint _value, bytes _data);
