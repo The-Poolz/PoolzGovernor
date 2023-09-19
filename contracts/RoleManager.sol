@@ -8,21 +8,12 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
 
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
-    modifier roleExistsFor(address _contract, bytes4 _selector) {
-        _roleExistsFor(_contract, _selector);
-        _;
-    }
-
     modifier isAdminOrFunctionRole(address _contract, bytes memory txData) {
         bytes4 selector = getSelectorFromData(txData);
-        _roleExistsFor(_contract, selector);
         _isAdminOrFunctionRole(_contract, selector);
         _;
     }
 
-    function _roleExistsFor(address _contract, bytes4 _selector) private pure {
-        require(getRoleOfSelector(_contract, _selector) != bytes32(0), "PoolzGovernor: role does not exist for Function");
-    }
 
     function _isAdminOrFunctionRole(address _contract, bytes4 _selector) private view {
         require(
@@ -46,7 +37,6 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
     function RemoveFunction(address _contract, string calldata _funcSig)
         external
         onlyRole(ADMIN_ROLE)
-        roleExistsFor(_contract, getSelectorFromSignature(_funcSig))
     {
         bytes4 selector = getSelectorFromSignature(_funcSig);
         SelectorToRequiredVotes[_contract][selector] = 0;
@@ -95,7 +85,6 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
     function grantRoleOfFunction(address _contract, string calldata _funcSig, address _user)
         external
         onlyRole(ADMIN_ROLE)
-        roleExistsFor(_contract, getSelectorFromSignature(_funcSig))
     {
         bytes4 selector = getSelectorFromSignature(_funcSig);
         bytes32 role = getRoleOfSelector(_contract, selector);
@@ -114,7 +103,6 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
     function revokeRoleOfFunction(address _contract, string calldata _funcSig, address _user)
         external
         onlyRole(ADMIN_ROLE)
-        roleExistsFor(_contract, getSelectorFromSignature(_funcSig))
     {
         bytes4 selector = getSelectorFromSignature(_funcSig);
         bytes32 role = getRoleOfSelector(_contract, selector);
