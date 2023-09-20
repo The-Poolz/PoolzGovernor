@@ -8,21 +8,12 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
 
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
-    modifier roleExistsFor(address _contract, bytes4 _selector) {
-        _roleExistsFor(_contract, _selector);
-        _;
-    }
-
     modifier isAdminOrFunctionRole(address _contract, bytes memory txData) {
         bytes4 selector = getSelectorFromData(txData);
-        _roleExistsFor(_contract, selector);
         _isAdminOrFunctionRole(_contract, selector);
         _;
     }
 
-    function _roleExistsFor(address _contract, bytes4 _selector) private pure {
-        require(getRoleOfSelector(_contract, _selector) != bytes32(0), "PoolzGovernor: role does not exist for Function");
-    }
 
     function _isAdminOrFunctionRole(address _contract, bytes4 _selector) private view {
         require(
@@ -40,17 +31,16 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
         bytes32 role = keccak256(abi.encodePacked(_contract, selector));
         _setRoleAdmin(role, ADMIN_ROLE);
         SelectorToRequiredVotes[_contract][selector] =  _requiredVotes;
-        emit ContractAdded(_contract, _requiredVotes);
+        emit FunctionAdded(_contract, selector, _requiredVotes);
     }
 
     function RemoveFunction(address _contract, string calldata _funcSig)
         external
         onlyRole(ADMIN_ROLE)
-        roleExistsFor(_contract, getSelectorFromSignature(_funcSig))
     {
         bytes4 selector = getSelectorFromSignature(_funcSig);
         SelectorToRequiredVotes[_contract][selector] = 0;
-        emit ContractRemoved(_contract);
+        emit FunctionRemoved(_contract, selector);
     }
 
     function grantAdmin(address _admin) external onlyRole(ADMIN_ROLE) {
@@ -72,7 +62,7 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
         ++votes.total;
         votes.voteOf[msg.sender] = true;
         if(votes.total >= getRoleMemberCount(ADMIN_ROLE) - 1){
-            revokeRole(ADMIN_ROLE, _admin);
+            _revokeRole(ADMIN_ROLE, _admin);
             resetVotes(votes);
         }
     }
@@ -95,7 +85,6 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
     function grantRoleOfFunction(address _contract, string calldata _funcSig, address _user)
         external
         onlyRole(ADMIN_ROLE)
-        roleExistsFor(_contract, getSelectorFromSignature(_funcSig))
     {
         bytes4 selector = getSelectorFromSignature(_funcSig);
         bytes32 role = getRoleOfSelector(_contract, selector);
@@ -107,20 +96,19 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
         if(votes.total >= getRoleMemberCount(ADMIN_ROLE)){
             _grantRole(role, _user);
             resetVotes(votes);
-            emit RoleGranted(_contract, _user);
+            emit FunctionGranted(_contract, selector, _user);
         }
     }
 
     function revokeRoleOfFunction(address _contract, string calldata _funcSig, address _user)
         external
         onlyRole(ADMIN_ROLE)
-        roleExistsFor(_contract, getSelectorFromSignature(_funcSig))
     {
         bytes4 selector = getSelectorFromSignature(_funcSig);
         bytes32 role = getRoleOfSelector(_contract, selector);
         require(hasRole(role, _user), "PoolzGovernor: user has no role");
         revokeRole(role, _user);
-        emit RoleRevoked(_contract, _user);
+        emit FunctionRevoked(_contract, selector, _user);
     }
 
     function transferRoles(address _to, bytes32[] memory _roles) external {
