@@ -28,8 +28,8 @@ contract PoolzGovernor is RoleManager {
         transaction.destination = _destination;
         transaction.value = msg.value;
         transaction.data = _data;
-        transaction.votes = 1;
-        transaction.voters[msg.sender] = true;
+        transaction.votes.total = 1;
+        transaction.votes.voteOf[msg.sender] = true;
         transaction.executed = false;
         emit TransactionProposed(txId, _destination, msg.value, _data);
         executeIfApproved(txId);
@@ -42,17 +42,17 @@ contract PoolzGovernor is RoleManager {
     {
         Transaction storage transaction = transactions[txId];
         require(transaction.executed == false, "PoolzGovernor: transaction already executed");
-        require(transaction.voters[msg.sender] == false, "PoolzGovernor: user already voted");
-        transaction.votes++;
-        transaction.voters[msg.sender] = true;
-        emit TransactionApproved(txId, transaction.destination, transaction.votes);
+        require(transaction.votes.voteOf[msg.sender] == false, "PoolzGovernor: user already voted");
+        transaction.votes.total++;
+        transaction.votes.voteOf[msg.sender] = true;
+        emit TransactionApproved(txId, transaction.destination, transaction.votes.total);
         executeIfApproved(txId);
     }
 
     function executeIfApproved(uint txId) private {
         Transaction storage transaction = transactions[txId];
         bytes4 selector = getSelectorFromData(transaction.data);
-        if(transaction.votes >= ContractSelectorToPermission[transaction.destination][selector].requiredVotes){
+        if(transaction.votes.total >= SelectorToRequiredVotes[transaction.destination][selector]){
             transaction.executed = true;
             (bool success, ) = transaction.destination.call{value: transaction.value}(transaction.data);
             require(success, "PoolzGovernor: transaction execution reverted.");

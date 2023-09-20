@@ -2,38 +2,30 @@
 pragma solidity ^0.8.0;
 
 contract GovernorState {
-    mapping (uint => Transaction) public transactions;
-    mapping (address => mapping(bytes4 => Permission)) public ContractSelectorToPermission; // [contract][functionSelector] => permission
-    mapping (address => mapping(address => mapping(bytes4 => PermissionStatus))) public UsersToPermission; // [user][contract][functionSelector] => PermissionStatus
-    mapping (address => PermissionStatus) public GrantAdminVotes;
-    mapping (address => PermissionStatus) public RevokeAdminVotes;
+    mapping (uint => Transaction) internal transactions;
+    mapping (address => mapping(bytes4 => uint8)) public SelectorToRequiredVotes; // [contract][functionSelector] => permission
+    mapping (address => mapping(address => mapping(bytes4 => Votes))) public UsersToVotes; // [user][contract][functionSelector] => Votes
+    mapping (address => Votes) public GrantAdminVotes;
+    mapping (address => Votes) public RevokeAdminVotes;
     uint public transactionCount;
-    address[] public AllContracts;
 
     struct Transaction {
         address destination;
         uint value;
         bytes data;
-        uint8 votes;
-        mapping(address => bool) voters;
         bool executed;
+        Votes votes;
     }
 
-    struct Permission {
-        bytes32 role;
-        uint8 requiredVotes;
+    struct Votes {
+        uint8 total;
+        mapping(address => bool) voteOf;
     }
 
-    struct PermissionStatus {
-        uint8 votes;
-        mapping(address => bool) voters;
-        bool isGranted;
-    }
-
-    event ContractAdded(address indexed _contract, uint8 _requiredVotes);
-    event ContractRemoved(address indexed _contract);
-    event RoleGranted(address indexed _contract, address indexed _user);
-    event RoleRevoked(address indexed _contract, address indexed _user);
+    event FunctionAdded(address indexed _contract, bytes4 indexed _selector, uint8 _requiredVotes);
+    event FunctionRemoved(address indexed _contract, bytes4 indexed _selector);
+    event FunctionGranted(address indexed _contract, bytes4 indexed _selector, address indexed _user);
+    event FunctionRevoked(address indexed _contract, bytes4 indexed _selector, address indexed _user);
     event TransactionProposed(uint txId, address indexed _destination, uint _value, bytes _data);
     event TransactionApproved(uint txId, address indexed _destination, uint8 votes);
     event TransactionExecuted(uint txId, address indexed _destination, uint _value, bytes _data);
@@ -42,15 +34,32 @@ contract GovernorState {
         address destination,
         uint value,
         bytes memory data,
-        uint8 votes,
+        uint8 totalVotes,
         bool executed
     ) {
         Transaction storage transaction = transactions[_txId];
         destination = transaction.destination;
         value = transaction.value;
         data = transaction.data;
-        votes = transaction.votes;
+        totalVotes = transaction.votes.total;
         executed = transaction.executed;
+    }
+    
+
+    function getVoteOfTransactionById(uint _txId, address _user) external view returns (bool) {
+        return transactions[_txId].votes.voteOf[_user];
+    }
+
+    function getGrantAdminVoteOf(address _user, address _admin) external view returns (bool) {
+        return GrantAdminVotes[_user].voteOf[_admin];
+    }
+
+    function getRevokeAdminVoteOf(address _user, address _admin) external view returns (bool) {
+        return RevokeAdminVotes[_user].voteOf[_admin];
+    }
+
+    function getRoleOfSelector(address _contract, bytes4 selector) public pure returns(bytes32 role) {
+        role = keccak256(abi.encodePacked(_contract, selector));
     }
 
     function getSelectorFromData(bytes memory txData) public pure returns (bytes4 selector) {
@@ -62,10 +71,7 @@ contract GovernorState {
     }
 
     function isTransactionVotedBy(uint _txId, address _user) external view returns (bool) {
-        return transactions[_txId].voters[_user];
+        return transactions[_txId].votes.voteOf[_user];
     }
 
-    function getTotalContracts() external view returns (uint) {
-        return AllContracts.length;
-    }
 }

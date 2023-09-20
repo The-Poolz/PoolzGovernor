@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test-watch": "nodemon --watch 'contracts/**/*.sol' --watch 'test/**/*.ts' --ext 'sol,ts' --exec 'npx hardhat test --typecheck'"
   },
   "keywords": [],
   "author": "",
@@ -15,6 +16,7 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.9.1"
+    "@openzeppelin/contracts": "^4.9.1",
+    "@poolzfinance/vault-manager": "^1.0.0"
   }
 }
