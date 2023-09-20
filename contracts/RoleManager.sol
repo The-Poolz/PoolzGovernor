@@ -62,7 +62,7 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
         ++votes.total;
         votes.voteOf[msg.sender] = true;
         if(votes.total >= getRoleMemberCount(ADMIN_ROLE) - 1){
-            revokeRole(ADMIN_ROLE, _admin);
+            _revokeRole(ADMIN_ROLE, _admin);
             resetVotes(votes);
         }
     }

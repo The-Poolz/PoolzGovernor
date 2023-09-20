@@ -44,9 +44,18 @@ contract GovernorState {
         totalVotes = transaction.votes.total;
         executed = transaction.executed;
     }
+    
 
     function getVoteOfTransactionById(uint _txId, address _user) external view returns (bool) {
         return transactions[_txId].votes.voteOf[_user];
+    }
+
+    function getGrantAdminVoteOf(address _user, address _admin) external view returns (bool) {
+        return GrantAdminVotes[_user].voteOf[_admin];
+    }
+
+    function getRevokeAdminVoteOf(address _user, address _admin) external view returns (bool) {
+        return RevokeAdminVotes[_user].voteOf[_admin];
     }
 
     function getRoleOfSelector(address _contract, bytes4 selector) public pure returns(bytes32 role) {
