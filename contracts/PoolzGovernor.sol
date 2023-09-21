@@ -30,7 +30,6 @@ contract PoolzGovernor is RoleManager {
         transaction.data = _data;
         transaction.votes.total = 1;
         transaction.votes.voteOf[msg.sender] = true;
-        transaction.executed = false;
         emit TransactionProposed(txId, _destination, msg.value, _data);
         executeIfApproved(txId);
     }
