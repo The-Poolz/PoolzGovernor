@@ -178,6 +178,5 @@ describe("Poolz Governor", () => {
             await expect(tx).to.emit(poolzGovernor, "FunctionRevoked").withArgs(vaultManager.address, createVaultSelector, user.address)
             await expect(tx).to.emit(poolzGovernor, "RoleRevoked").withArgs(role, user.address, admins[0].address)
         })
-
     })
 })
