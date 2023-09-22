@@ -17,8 +17,8 @@ describe("Poolz Governor", () => {
 
     before(async () => {
         let allSigners = await ethers.getSigners()
-        admins = allSigners.slice(0, 4) // first 3 address are admins
-        users = allSigners.slice(4, 10) // next 7 address are users
+        admins = allSigners.slice(0, 4) // first 4 address are admins
+        users = allSigners.slice(4, 10) // next 6 address are users
         poolzGovernor = await (await ethers.getContractFactory("PoolzGovernor")).deploy(admins.map(a => a.address))
         vaultManager = await (await ethers.getContractFactory("VaultManager")).deploy()
         ADMIN_ROLE = await poolzGovernor.ADMIN_ROLE()
@@ -109,6 +109,74 @@ describe("Poolz Governor", () => {
             expect(votes).to.equal(0)
             expect(totalAdmins).to.equal(admins.length)
             expect(await poolzGovernor.hasRole(ADMIN_ROLE, newAdmin.address)).to.be.false
+        })
+
+        it("admins can transfer ownership to another admin", async () => {
+            const admin = admins.at(-1)
+            if(!admin) throw new Error("admin is undefined")
+            await poolzGovernor.connect(admin).transferRoles(newAdmin.address, [ADMIN_ROLE])
+            expect(await poolzGovernor.hasRole(ADMIN_ROLE, newAdmin.address)).to.be.true
+            expect(await poolzGovernor.hasRole(ADMIN_ROLE, admin.address)).to.be.false
+            await poolzGovernor.connect(newAdmin).transferRoles(admin.address, [ADMIN_ROLE])
+            expect(await poolzGovernor.hasRole(ADMIN_ROLE, newAdmin.address)).to.be.false
+            expect(await poolzGovernor.hasRole(ADMIN_ROLE, admin.address)).to.be.true
+        })
+
+        it("admins can renounce their roles", async () => {
+            const admin = admins.at(-1)
+            if(!admin) throw new Error("admin is undefined")
+            await poolzGovernor.connect(admin).renounceRole(ADMIN_ROLE, admin.address)
+            admins.pop()
+            expect(await poolzGovernor.hasRole(ADMIN_ROLE, admin.address)).to.be.false
+            expect(await poolzGovernor.getRoleMemberCount(ADMIN_ROLE)).to.equal(admins.length)
+        })
+    })
+
+    describe("User CRUD", () => {
+        it("should grant role of function to user", async () => {
+            const user = users.at(0)
+            if(!user) throw new Error("user is undefined")
+            for( const [index, admin] of admins.entries()){
+                const tx = await poolzGovernor.connect(admin).grantRoleOfFunction(vaultManager.address, createVaultSig, user.address)
+                const votes = await poolzGovernor.UsersToVotes(user.address, vaultManager.address, createVaultSelector)
+                const voteOfAdmin = await poolzGovernor.getUserVoteOf(user.address, vaultManager.address, createVaultSelector, admin.address)
+                if(index < admins.length - 1){
+                    expect(votes).to.equal(index + 1)
+                    expect(voteOfAdmin).to.equal(true)
+                } else {
+                    const role = getRoleOfSelector(vaultManager.address, createVaultSelector)
+                    await expect(tx).to.emit(poolzGovernor, "FunctionGranted").withArgs(vaultManager.address, createVaultSelector, user.address)
+                    await expect(tx).to.emit(poolzGovernor, "RoleGranted").withArgs(role, user.address, admin.address)
+                }
+            }
+            for (const admin of admins) {
+                expect(await poolzGovernor.getUserVoteOf(user.address, vaultManager.address, createVaultSelector, admin.address)).to.be.false
+            }
+            const votes = await poolzGovernor.UsersToVotes(user.address, vaultManager.address, createVaultSelector)
+            expect(votes).to.equal(0)
+            const role = getRoleOfSelector(vaultManager.address, createVaultSelector)
+            expect(await poolzGovernor.hasRole(role, user.address)).to.be.true
+        })
+
+        it("Users should be able to transfer their roles to another user", async () => {
+            const user = users.at(0)
+            const user2 = users.at(1)
+            if(!user) throw new Error("user is undefined")
+            if(!user2) throw new Error("user2 is undefined")
+            const role = getRoleOfSelector(vaultManager.address, createVaultSelector)
+            const tx = await poolzGovernor.connect(user).transferRoles(user2.address, [role])
+            expect(await poolzGovernor.hasRole(role, user.address)).to.be.false
+            expect(await poolzGovernor.hasRole(role, user2.address)).to.be.true
+        })
+
+        it("should revoke role of function from user", async () => {
+            const user = users.at(1)
+            if(!user) throw new Error("user is undefined")
+            const tx = await poolzGovernor.revokeRoleOfFunction(vaultManager.address, createVaultSig, user.address)
+            const role = getRoleOfSelector(vaultManager.address, createVaultSelector)
+            expect(await poolzGovernor.hasRole(role, user.address)).to.be.false
+            await expect(tx).to.emit(poolzGovernor, "FunctionRevoked").withArgs(vaultManager.address, createVaultSelector, user.address)
+            await expect(tx).to.emit(poolzGovernor, "RoleRevoked").withArgs(role, user.address, admins[0].address)
         })
     })
 })

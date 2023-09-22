@@ -58,6 +58,10 @@ contract GovernorState {
         return RevokeAdminVotes[_user].voteOf[_admin];
     }
 
+    function getUserVoteOf(address _user, address _contract, bytes4 _selector, address _admin) external view returns (bool) {
+        return UsersToVotes[_user][_contract][_selector].voteOf[_admin];
+    }
+
     function getRoleOfSelector(address _contract, bytes4 selector) public pure returns(bytes32 role) {
         role = keccak256(abi.encodePacked(_contract, selector));
     }
