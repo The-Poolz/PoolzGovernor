@@ -115,7 +115,7 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
         uint256 roleslength = _roles.length;
         for(uint i = 0; i < roleslength ; i++){
             require(hasRole(_roles[i], msg.sender), "PoolzGovernor: you have no role");
-            revokeRole(_roles[i], msg.sender);
+            _revokeRole(_roles[i], msg.sender);
             _setupRole(_roles[i], _to);
         }
     }
