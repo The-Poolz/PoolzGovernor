@@ -45,8 +45,8 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
 
     function grantAdmin(address _admin) external onlyRole(ADMIN_ROLE) {
         Votes storage votes = GrantAdminVotes[_admin];
-        require(hasRole(ADMIN_ROLE, _admin) == false, "PoolzGovernor: user already admin");
-        require(votes.voteOf[msg.sender] == false, "PoolzGovernor: you already voted");
+        require(!hasRole(ADMIN_ROLE, _admin), "PoolzGovernor: user already admin");
+        require(!votes.voteOf[msg.sender], "PoolzGovernor: you already voted");
         ++votes.total;
         votes.voteOf[msg.sender] = true;
         if(votes.total >= getRoleMemberCount(ADMIN_ROLE)){
@@ -57,8 +57,8 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
 
     function revokeAdmin(address _admin) external onlyRole(ADMIN_ROLE) {
         Votes storage votes = RevokeAdminVotes[_admin];
-        require(hasRole(ADMIN_ROLE, _admin) == true, "PoolzGovernor: user not admin");
-        require(votes.voteOf[msg.sender] == false, "PoolzGovernor: you already voted");
+        require(hasRole(ADMIN_ROLE, _admin), "PoolzGovernor: user not admin");
+        require(!votes.voteOf[msg.sender], "PoolzGovernor: you already voted");
         ++votes.total;
         votes.voteOf[msg.sender] = true;
         if(votes.total >= getRoleMemberCount(ADMIN_ROLE) - 1){
@@ -88,9 +88,9 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
     {
         bytes4 selector = getSelectorFromSignature(_funcSig);
         bytes32 role = getRoleOfSelector(_contract, selector);
-        require(hasRole(role, _user) == false, "PoolzGovernor: user already has role");
+        require(!hasRole(role, _user), "PoolzGovernor: user already has role");
         Votes storage votes = UsersToVotes[_user][_contract][selector];
-        require(votes.voteOf[msg.sender] == false, "PoolzGovernor: you already voted");
+        require(!votes.voteOf[msg.sender], "PoolzGovernor: you already voted");
         ++votes.total;
         votes.voteOf[msg.sender] = true;
         if(votes.total >= getRoleMemberCount(ADMIN_ROLE)){

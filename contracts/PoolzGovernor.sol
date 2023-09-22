@@ -40,8 +40,8 @@ contract PoolzGovernor is RoleManager {
         isAdminOrFunctionRole(transactions[txId].destination, transactions[txId].data)
     {
         Transaction storage transaction = transactions[txId];
-        require(transaction.executed == false, "PoolzGovernor: transaction already executed");
-        require(transaction.votes.voteOf[msg.sender] == false, "PoolzGovernor: user already voted");
+        require(!transaction.executed, "PoolzGovernor: transaction already executed");
+        require(!transaction.votes.voteOf[msg.sender], "PoolzGovernor: user already voted");
         transaction.votes.total++;
         transaction.votes.voteOf[msg.sender] = true;
         emit TransactionApproved(txId, transaction.destination, transaction.votes.total);
