@@ -47,7 +47,7 @@ describe("Poolz Governor", () => {
         const txInfo = await poolzGovernor.getTransactionById(txId)
         const voteOfAdmin = await poolzGovernor.getVoteOfTransactionById(txId, admin.address)
         await expect(tx).to.emit(poolzGovernor, "TransactionProposed").withArgs(txId, vaultManager.address, value, msgData)
-        expect(txInfo).to.deep.equal([vaultManager.address, value, msgData, 1, false])
+        expect(txInfo).to.deep.equal([vaultManager.address, value, msgData, false, 1])
         expect(voteOfAdmin).to.be.true
     })
 
@@ -57,7 +57,7 @@ describe("Poolz Governor", () => {
         const txInfo = await poolzGovernor.getTransactionById(txId)
         const voteOfUser = await poolzGovernor.getVoteOfTransactionById(txId, user.address)
         await expect(tx).to.emit(poolzGovernor, "TransactionApproved").withArgs(txId, vaultManager.address, 2)
-        expect(txInfo).to.deep.equal([vaultManager.address, 0, msgData, 2, false])
+        expect(txInfo).to.deep.equal([vaultManager.address, 0, msgData, false, 2])
         expect(voteOfUser).to.be.true
     })
 
@@ -70,7 +70,7 @@ describe("Poolz Governor", () => {
         await expect(tx).to.emit(poolzGovernor, "TransactionExecuted").withArgs(txId, vaultManager.address, txInfo.value, msgData)
         const vaultAddress = await vaultManager.vaultIdToVault(numberOfVaultsBefore)
         const vault = vaultFactory.attach(vaultAddress)
-        expect(txInfo).to.deep.equal([vaultManager.address, 0, msgData, 3, true])
+        expect(txInfo).to.deep.equal([vaultManager.address, 0, msgData, true, 3])
         expect(voteOfUser).to.be.true
         expect(await vaultManager.totalVaults()).to.equal(1)
         expect(await vault.tokenAddress()).to.equal(token)
