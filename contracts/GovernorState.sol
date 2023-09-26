@@ -7,6 +7,7 @@ contract GovernorState {
     mapping (address => mapping(address => mapping(bytes4 => Votes))) public UsersToVotes; // [user][contract][functionSelector] => Votes
     mapping (address => Votes) public GrantAdminVotes;
     mapping (address => Votes) public RevokeAdminVotes;
+    mapping (address => Votes) public GrantPauseVotes;
     Votes public UnPauseVotes;
     uint public transactionCount;
 

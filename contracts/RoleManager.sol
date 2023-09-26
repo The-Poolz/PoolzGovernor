@@ -8,6 +8,7 @@ import "./GovernorState.sol";
 contract RoleManager is GovernorState, AccessControlEnumerable, Pausable {
 
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+    bytes32 public constant PAUSE_ROLE = keccak256("PAUSE_ROLE");
 
     modifier isAdminOrFunctionRole(address _contract, bytes memory txData) {
         bytes4 selector = getSelectorFromData(txData);
@@ -15,6 +16,10 @@ contract RoleManager is GovernorState, AccessControlEnumerable, Pausable {
         _;
     }
 
+    modifier isAdminOrPauseRole() {
+        require(hasRole(ADMIN_ROLE, msg.sender) || hasRole(PAUSE_ROLE, msg.sender), "PoolzGovernor: must be admin or have pause role");
+        _;
+    }
 
     function _isAdminOrFunctionRole(address _contract, bytes4 _selector) private view {
         require(
@@ -112,7 +117,24 @@ contract RoleManager is GovernorState, AccessControlEnumerable, Pausable {
         emit FunctionRevoked(_contract, selector, _user);
     }
 
-    function pause() external onlyRole(ADMIN_ROLE) {
+    function grantPauseRole(address _pauser) external onlyRole(ADMIN_ROLE) {
+        require(!hasRole(PAUSE_ROLE, _pauser), "PoolzGovernor: user already has role");
+        Votes storage votes = GrantPauseVotes[_pauser];
+        require(!votes.voteOf[msg.sender], "PoolzGovernor: you already voted");
+        ++votes.total;
+        votes.voteOf[msg.sender] = true;
+        if(votes.total >= getRoleMemberCount(ADMIN_ROLE)){
+            _setupRole(PAUSE_ROLE, _pauser);
+            resetVotes(votes);
+        }
+    }
+
+    function revokePauseRole(address _pauser) external onlyRole(ADMIN_ROLE) {
+        require(hasRole(PAUSE_ROLE, _pauser), "PoolzGovernor: user has no role");
+        revokeRole(PAUSE_ROLE, _pauser);
+    }
+
+    function pause() external isAdminOrPauseRole {
         _pause();
     }
 
