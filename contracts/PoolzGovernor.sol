@@ -19,6 +19,7 @@ contract PoolzGovernor is RoleManager {
 
     function proposeTransaction(address _destination, bytes memory _data)
         public
+        whenNotPaused
         isAdminOrFunctionRole(_destination, _data)
         payable
         returns (uint txId)
@@ -36,6 +37,7 @@ contract PoolzGovernor is RoleManager {
 
     function approveTransaction(uint txId)
         public
+        whenNotPaused
         transactionExists(txId)
         isAdminOrFunctionRole(transactions[txId].destination, transactions[txId].data)
     {

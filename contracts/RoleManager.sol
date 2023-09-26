@@ -2,9 +2,10 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 import "./GovernorState.sol";
 
-contract RoleManager is GovernorState, AccessControlEnumerable {
+contract RoleManager is GovernorState, AccessControlEnumerable, Pausable {
 
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
@@ -109,6 +110,21 @@ contract RoleManager is GovernorState, AccessControlEnumerable {
         require(hasRole(role, _user), "PoolzGovernor: user has no role");
         revokeRole(role, _user);
         emit FunctionRevoked(_contract, selector, _user);
+    }
+
+    function pause() external onlyRole(ADMIN_ROLE) {
+        _pause();
+    }
+
+    function unPause() external onlyRole(ADMIN_ROLE) {
+        Votes storage votes = UnPauseVotes;
+        require(!votes.voteOf[msg.sender], "PoolzGovernor: you already voted");
+        ++votes.total;
+        votes.voteOf[msg.sender] = true;
+        if(votes.total >= getRoleMemberCount(ADMIN_ROLE)){
+            _unpause();
+            resetVotes(votes);
+        }
     }
 
     function transferRoles(address _to, bytes32[] memory _roles) external {
