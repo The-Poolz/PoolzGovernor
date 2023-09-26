@@ -8,7 +8,6 @@ contract Governee is Ownable {
     uint public value;
     address public user;
 
-
     constructor(address _governor) {
         _transferOwnership(_governor);
     }
