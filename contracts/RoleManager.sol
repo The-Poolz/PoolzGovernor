@@ -138,7 +138,7 @@ contract RoleManager is GovernorState, AccessControlEnumerable, Pausable {
         _pause();
     }
 
-    function unPause() external onlyRole(ADMIN_ROLE) {
+    function unpause() external onlyRole(ADMIN_ROLE) {
         Votes storage votes = UnPauseVotes;
         require(!votes.voteOf[msg.sender], "PoolzGovernor: you already voted");
         ++votes.total;

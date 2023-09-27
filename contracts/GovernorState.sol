@@ -63,6 +63,10 @@ contract GovernorState {
         return RevokeAdminVotes[_user].voteOf[_admin];
     }
 
+    function getGrantPauseVoteOf(address _pauser, address _admin) external view returns (bool) {
+        return GrantPauseVotes[_pauser].voteOf[_admin];
+    }
+
     function getUserVoteOf(address _user, address _contract, bytes4 _selector, address _admin) external view returns (bool) {
         return UsersToVotes[_user][_contract][_selector].voteOf[_admin];
     }
