@@ -184,4 +184,56 @@ describe("External Transactions", () => {
             expect(voteOfOperator).to.be.true
         })
     })
+
+    describe("Transactions with value", async () => {
+        const signature = "deposit()"
+        const selector = getSelectorFromSignature(signature)
+        const value = 99
+        let oldBalance: BigNumber
+
+        before(async () => {
+            oldBalance = await ethers.provider.getBalance(governee.address)
+            const balance = await governee.balance()
+            expect(balance).to.equal(oldBalance)
+        })
+
+        it("should allow admin to deposit", async () => {
+            const admin = admins[0]
+            const txInfo = await governee.populateTransaction.deposit({value})
+            if(!txInfo.data) assert(false, "tx.data is null")
+            const txId = await poolzGovernor.connect(admin).callStatic.proposeTransaction(governee.address, txInfo.data, {value})
+            const tx = await poolzGovernor.connect(admin).proposeTransaction(governee.address, txInfo.data, {value: txInfo.value})
+            const [balance, bal, transaction] = await Promise.all([
+                governee.balance(),
+                ethers.provider.getBalance(governee.address),
+                poolzGovernor.getTransactionById(txId),
+                expect(tx).to.emit(poolzGovernor, "TransactionProposed").withArgs(txId, governee.address, value, txInfo.data),
+                expect(tx).to.emit(poolzGovernor, "TransactionExecuted").withArgs(txId, governee.address, value, txInfo.data)
+            ])
+            expect(balance).to.equal(oldBalance.add(value))
+            expect(bal).to.equal(balance)
+            expect(transaction).to.deep.equal([governee.address, value, txInfo.data, true, 1])
+            oldBalance = balance
+        })
+
+        it("should allow user to deposit", async () => {
+            const user = users[0]
+            await grantRoleToUser(poolzGovernor, governee, admins, user, signature, selector)
+            const txInfo = await governee.populateTransaction.deposit({value})
+            if(!txInfo.data) assert(false, "tx.data is null")
+            const txId = await poolzGovernor.connect(user).callStatic.proposeTransaction(governee.address, txInfo.data, {value})
+            const tx = await poolzGovernor.connect(user).proposeTransaction(governee.address, txInfo.data, {value: txInfo.value})
+            const [balance, bal, transaction] = await Promise.all([
+                governee.balance(),
+                ethers.provider.getBalance(governee.address),
+                poolzGovernor.getTransactionById(txId),
+                expect(tx).to.emit(poolzGovernor, "TransactionProposed").withArgs(txId, governee.address, value, txInfo.data),
+                expect(tx).to.emit(poolzGovernor, "TransactionExecuted").withArgs(txId, governee.address, value, txInfo.data)
+            ])
+            expect(balance).to.equal(oldBalance.add(value))
+            expect(bal).to.equal(balance)
+            expect(transaction).to.deep.equal([governee.address, value, txInfo.data, true, 1])
+            oldBalance = balance
+        })
+    })
 })
