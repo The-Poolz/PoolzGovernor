@@ -7,6 +7,8 @@ contract GovernorState {
     mapping (address => mapping(address => mapping(bytes4 => Votes))) public UsersToVotes; // [user][contract][functionSelector] => Votes
     mapping (address => Votes) public GrantAdminVotes;
     mapping (address => Votes) public RevokeAdminVotes;
+    mapping (address => Votes) public GrantPauseVotes;
+    Votes public UnPauseVotes;
     uint public transactionCount;
 
     struct Transaction {
@@ -59,6 +61,10 @@ contract GovernorState {
 
     function getRevokeAdminVoteOf(address _user, address _admin) external view returns (bool) {
         return RevokeAdminVotes[_user].voteOf[_admin];
+    }
+
+    function getGrantPauseVoteOf(address _pauser, address _admin) external view returns (bool) {
+        return GrantPauseVotes[_pauser].voteOf[_admin];
     }
 
     function getUserVoteOf(address _user, address _contract, bytes4 _selector, address _admin) external view returns (bool) {

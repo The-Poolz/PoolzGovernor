@@ -5,7 +5,7 @@ import { expect } from 'chai';
 import { getRoleOfSelector, getSelectorFromSignature } from "./utils";
 import { BigNumber } from "ethers";
 
-describe("Poolz Governor", () => {
+describe("Tests with Vault", () => {
     let admins: SignerWithAddress[]
     let users: SignerWithAddress[]
     let token: string
