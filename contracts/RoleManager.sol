@@ -37,15 +37,15 @@ contract RoleManager is GovernorState, AccessControlEnumerable, Pausable {
         bytes32 role = keccak256(abi.encodePacked(_contract, selector));
         _setRoleAdmin(role, ADMIN_ROLE);
         SelectorToRequiredVotes[_contract][selector] =  _requiredVotes;
-        emit VotesForFunction(_contract, selector, _requiredVotes);
+        emit RequiredVotesUpdated(_contract, selector, _requiredVotes);
     }
 
-    function grantAdmin(address _admin) external onlyRole(SELF_ROLE) {
+    function grantAdminRole(address _admin) external onlyRole(SELF_ROLE) {
         require(!hasRole(ADMIN_ROLE, _admin), "PoolzGovernor: user already admin");
         _grantRole(ADMIN_ROLE, _admin);
     }
 
-    function revokeAdmin(address _admin) external onlyRole(SELF_ROLE) {
+    function revokeAdminRole(address _admin) external onlyRole(SELF_ROLE) {
         require(hasRole(ADMIN_ROLE, _admin), "PoolzGovernor: user not admin");
         _revokeRole(ADMIN_ROLE, _admin);
     }

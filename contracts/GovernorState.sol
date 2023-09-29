@@ -27,7 +27,7 @@ contract GovernorState {
         uint8 totalVotes;
     }
 
-    event VotesForFunction(address indexed _contract, bytes4 indexed _selector, uint8 _requiredVotes);
+    event RequiredVotesUpdated(address indexed _contract, bytes4 indexed _selector, uint8 _requiredVotes);
     event FunctionGranted(address indexed _contract, bytes4 indexed _selector, address indexed _user);
     event FunctionRevoked(address indexed _contract, bytes4 indexed _selector, address indexed _user);
     event TransactionProposed(uint txId, address indexed _destination, uint _value, bytes _data);
