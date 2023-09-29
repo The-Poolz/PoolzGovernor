@@ -10,6 +10,7 @@ contract PoolzGovernor is RoleManager {
         for(uint i = 0; i < _admins.length; i++){
             _setupRole(ADMIN_ROLE, _admins[i]);
         }
+        _setupRole(SELF_ROLE, address(this));
     }
 
     modifier transactionExists(uint txId) {
