@@ -49,6 +49,11 @@ contract GovernorState {
         return transactions[_txId].votes.voteOf[_user];
     }
 
+    function getRequiredVotesOfFunction(address _contract, string calldata _funcSig) external view returns (uint8) {
+        bytes4 _selector = getSelectorFromSignature(_funcSig);
+        return SelectorToRequiredVotes[_contract][_selector];
+    }
+
     function getRoleOfSelector(address _contract, bytes4 selector) public pure returns(bytes32 role) {
         role = keccak256(abi.encodePacked(_contract, selector));
     }

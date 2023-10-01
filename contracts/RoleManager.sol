@@ -34,8 +34,6 @@ contract RoleManager is GovernorState, AccessControlEnumerable, Pausable {
         onlyRole(SELF_ROLE)
     {
         bytes4 selector = getSelectorFromSignature(_funcSig);
-        bytes32 role = keccak256(abi.encodePacked(_contract, selector));
-        _setRoleAdmin(role, ADMIN_ROLE);
         SelectorToRequiredVotes[_contract][selector] =  _requiredVotes;
         emit RequiredVotesUpdated(_contract, selector, _requiredVotes);
     }

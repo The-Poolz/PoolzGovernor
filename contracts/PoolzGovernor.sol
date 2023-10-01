@@ -5,18 +5,17 @@ import "./RoleManager.sol";
 
 contract PoolzGovernor is RoleManager {
 
-    constructor(address[] memory _admins) {
+    constructor(address[] memory _admins, uint8 requiredVotes) {
         require(_admins.length >= 2, "PoolzGovernor: Need more than 1 admin");
         for(uint i = 0; i < _admins.length; i++){
             _setupRole(ADMIN_ROLE, _admins[i]);
         }
         _setupRole(SELF_ROLE, address(this));
-        uint8 requiredVotes = uint8(_admins.length / 2 + 1);
         setRequiedVotes(requiredVotes);
     }
 
     function setRequiedVotes(uint8 requiredVotes) private {
-        SelectorToRequiredVotes[address(this)][this.SelectorToRequiredVotes.selector] = requiredVotes;
+        SelectorToRequiredVotes[address(this)][this.setRequiredVotesOfFunction.selector] = requiredVotes;
         SelectorToRequiredVotes[address(this)][this.grantAdminRole.selector] = requiredVotes;
         SelectorToRequiredVotes[address(this)][this.revokeAdminRole.selector] = requiredVotes;
         SelectorToRequiredVotes[address(this)][this.grantPauseRole.selector] = requiredVotes;
