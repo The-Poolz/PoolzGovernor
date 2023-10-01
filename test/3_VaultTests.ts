@@ -13,11 +13,9 @@ describe("Tests with Vault", () => {
     let vaultManager: VaultManager
     let vaultFactory: Vault__factory
     let ADMIN_ROLE: string
-    let DEFAULT_ROLE: string // default admin of all roles
     let msgData: string
     let txId: BigNumber
     const createVaultSig = "createNewVault(address)"
-    const createVaultSelector = getSelectorFromSignature(createVaultSig)
     const requiredVotes = 3
 
     before(async () => {

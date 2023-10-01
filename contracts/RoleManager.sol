@@ -9,6 +9,7 @@ contract RoleManager is GovernorState, AccessControlEnumerable, Pausable {
 
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant PAUSE_ROLE = keccak256("PAUSE_ROLE");
+    bytes32 public constant SELF_ROLE = keccak256("SELF_ROLE");
 
     modifier isAdminOrFunctionRole(address _contract, bytes memory txData) {
         bytes4 selector = getSelectorFromData(txData);
@@ -28,87 +29,46 @@ contract RoleManager is GovernorState, AccessControlEnumerable, Pausable {
         ), "PoolzGovernor: must be admin or have contract role");
     }
 
-    function AddNewFunction(address _contract, string calldata _funcSig, uint8 _requiredVotes)
-        public
-        onlyRole(ADMIN_ROLE)
-    {
-        require(_requiredVotes > 0, "PoolzGovernor: requiredVotes must be greater than 0");
-        bytes4 selector = getSelectorFromSignature(_funcSig);
-        bytes32 role = keccak256(abi.encodePacked(_contract, selector));
-        _setRoleAdmin(role, ADMIN_ROLE);
-        SelectorToRequiredVotes[_contract][selector] =  _requiredVotes;
-        emit FunctionAdded(_contract, selector, _requiredVotes);
-    }
-
-    function RemoveFunction(address _contract, string calldata _funcSig)
+    function setRequiredVotesOfFunction(address _contract, string calldata _funcSig, uint8 _requiredVotes)
         external
-        onlyRole(ADMIN_ROLE)
+        onlyRole(SELF_ROLE)
     {
         bytes4 selector = getSelectorFromSignature(_funcSig);
-        SelectorToRequiredVotes[_contract][selector] = 0;
-        emit FunctionRemoved(_contract, selector);
+        SelectorToRequiredVotes[_contract][selector] =  _requiredVotes;
+        emit RequiredVotesUpdated(_contract, selector, _requiredVotes);
     }
 
-    function grantAdmin(address _admin) external onlyRole(ADMIN_ROLE) {
-        Votes storage votes = GrantAdminVotes[_admin];
+    function grantAdminRole(address _admin) external onlyRole(SELF_ROLE) {
         require(!hasRole(ADMIN_ROLE, _admin), "PoolzGovernor: user already admin");
-        require(!votes.voteOf[msg.sender], "PoolzGovernor: you already voted");
-        ++votes.total;
-        votes.voteOf[msg.sender] = true;
-        if(votes.total >= getRoleMemberCount(ADMIN_ROLE)){
-            _setupRole(ADMIN_ROLE, _admin);
-            resetVotes(votes);
-        }
+        _grantRole(ADMIN_ROLE, _admin);
     }
 
-    function revokeAdmin(address _admin) external onlyRole(ADMIN_ROLE) {
-        Votes storage votes = RevokeAdminVotes[_admin];
+    function revokeAdminRole(address _admin) external onlyRole(SELF_ROLE) {
         require(hasRole(ADMIN_ROLE, _admin), "PoolzGovernor: user not admin");
-        require(!votes.voteOf[msg.sender], "PoolzGovernor: you already voted");
-        ++votes.total;
-        votes.voteOf[msg.sender] = true;
-        if(votes.total >= getRoleMemberCount(ADMIN_ROLE) - 1){
-            _revokeRole(ADMIN_ROLE, _admin);
-            resetVotes(votes);
-        }
-    }
-
-    function resetVotes(Votes storage _votes) private {
-        _votes.total = 0;
-        uint256 totalAdmins = getRoleMemberCount(ADMIN_ROLE);
-        for(uint i = 0; i < totalAdmins; i++){
-            _votes.voteOf[getRoleMember(ADMIN_ROLE, i)] = false;
-        }
+        _revokeRole(ADMIN_ROLE, _admin);
     }
 
     function renounceRole(bytes32 role, address account) public override(AccessControl, IAccessControl) {
         if(role == ADMIN_ROLE){
-            require(getRoleMemberCount(role) > 2, "PoolzGoverner: Need atleat 2 admins");
+            require(getRoleMemberCount(role) > 2, "PoolzGoverner: Need atleast 2 admins");
         }
         super.renounceRole(role, account);
     }
 
     function grantRoleOfFunction(address _contract, string calldata _funcSig, address _user)
         external
-        onlyRole(ADMIN_ROLE)
+        onlyRole(SELF_ROLE)
     {
         bytes4 selector = getSelectorFromSignature(_funcSig);
         bytes32 role = getRoleOfSelector(_contract, selector);
         require(!hasRole(role, _user), "PoolzGovernor: user already has role");
-        Votes storage votes = UsersToVotes[_user][_contract][selector];
-        require(!votes.voteOf[msg.sender], "PoolzGovernor: you already voted");
-        ++votes.total;
-        votes.voteOf[msg.sender] = true;
-        if(votes.total >= getRoleMemberCount(ADMIN_ROLE)){
-            _grantRole(role, _user);
-            resetVotes(votes);
-            emit FunctionGranted(_contract, selector, _user);
-        }
+        _grantRole(role, _user);
+        emit FunctionGranted(_contract, selector, _user);
     }
 
     function revokeRoleOfFunction(address _contract, string calldata _funcSig, address _user)
         external
-        onlyRole(ADMIN_ROLE)
+        onlyRole(SELF_ROLE)
     {
         bytes4 selector = getSelectorFromSignature(_funcSig);
         bytes32 role = getRoleOfSelector(_contract, selector);
@@ -117,19 +77,12 @@ contract RoleManager is GovernorState, AccessControlEnumerable, Pausable {
         emit FunctionRevoked(_contract, selector, _user);
     }
 
-    function grantPauseRole(address _pauser) external onlyRole(ADMIN_ROLE) {
+    function grantPauseRole(address _pauser) external onlyRole(SELF_ROLE) {
         require(!hasRole(PAUSE_ROLE, _pauser), "PoolzGovernor: user already has role");
-        Votes storage votes = GrantPauseVotes[_pauser];
-        require(!votes.voteOf[msg.sender], "PoolzGovernor: you already voted");
-        ++votes.total;
-        votes.voteOf[msg.sender] = true;
-        if(votes.total >= getRoleMemberCount(ADMIN_ROLE)){
-            _setupRole(PAUSE_ROLE, _pauser);
-            resetVotes(votes);
-        }
+        _grantRole(PAUSE_ROLE, _pauser);
     }
 
-    function revokePauseRole(address _pauser) external onlyRole(ADMIN_ROLE) {
+    function revokePauseRole(address _pauser) external onlyRole(SELF_ROLE) {
         require(hasRole(PAUSE_ROLE, _pauser), "PoolzGovernor: user has no role");
         revokeRole(PAUSE_ROLE, _pauser);
     }
@@ -138,15 +91,8 @@ contract RoleManager is GovernorState, AccessControlEnumerable, Pausable {
         _pause();
     }
 
-    function unpause() external onlyRole(ADMIN_ROLE) {
-        Votes storage votes = UnPauseVotes;
-        require(!votes.voteOf[msg.sender], "PoolzGovernor: you already voted");
-        ++votes.total;
-        votes.voteOf[msg.sender] = true;
-        if(votes.total >= getRoleMemberCount(ADMIN_ROLE)){
-            _unpause();
-            resetVotes(votes);
-        }
+    function unpause() external onlyRole(SELF_ROLE) {
+        _unpause();
     }
 
     function transferRoles(address _to, bytes32[] memory _roles) external {
@@ -154,7 +100,7 @@ contract RoleManager is GovernorState, AccessControlEnumerable, Pausable {
         for(uint i = 0; i < roleslength ; i++){
             require(hasRole(_roles[i], msg.sender), "PoolzGovernor: you have no role");
             _revokeRole(_roles[i], msg.sender);
-            _setupRole(_roles[i], _to);
+            _grantRole(_roles[i], _to);
         }
     }
 }
